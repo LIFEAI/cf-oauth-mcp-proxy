@@ -23,6 +23,17 @@ echo  Claude Code uses the gh CLI which is already pre-authenticated.
 echo  This is for claude.ai web and other OAuth MCP clients.
 echo.
 
+
+:: -- Generate an AUTH_PIN if you don't have one yet --------------------------
+:: Run this in PowerShell to generate a random 8-char PIN:
+::   -join ((65..90 + 48..57) | Get-Random -Count 8 | % {[char]$_})
+:: Or from cmd.exe:
+::   powershell -command "-join ((65..90 + 48..57) | Get-Random -Count 8 | % {[char]$_})"
+::
+:: Store the result in your password manager, then set it as a Worker secret:
+::   wrangler secret put AUTH_PIN
+:: -----------------------------------------------------------------------------
+
 :: -- Resolve Worker URL -------------------------------------------------------
 if "%~1"=="" (
     set /p WORKER_URL="Enter your Worker URL (e.g. https://github-mcp.yourdomain.com): "
