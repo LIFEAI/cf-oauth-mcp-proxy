@@ -1,5 +1,10 @@
 # cf-oauth-mcp-proxy
 
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/daveladouceur?label=Sponsor&logo=GitHub&color=c8a84b)](https://github.com/sponsors/daveladouceur)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
+[![MCP](https://img.shields.io/badge/MCP-OAuth%202.1-blueviolet)](https://modelcontextprotocol.io)
+
 > **Cloudflare Worker** — OAuth 2.1 + DCR + PKCE edge proxy for any PAT-authenticated MCP server.
 
 Connects OAuth-capable MCP clients (like **claude.ai**) to MCP servers that only support PAT/token auth (like the official GitHub MCP server). The upstream token lives as a Cloudflare Worker secret — never in source code, never in your conversation transcript.
