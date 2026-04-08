@@ -106,6 +106,37 @@ wrangler secret put AUTH_PIN         # PIN you'll type in browser to authorize
 > **AUTH_PIN** — alphanumeric, 6–12 chars, store in your password manager.
 > Anyone with this PIN can authorize a new client connection.
 
+### Generating an AUTH_PIN
+
+Your AUTH_PIN is a short alphanumeric string you type in the browser consent page to authorize a new client connection. Generate one before running `wrangler secret put AUTH_PIN`.
+
+**Linux / macOS:**
+```bash
+openssl rand -base64 12 | tr -dc 'A-Z0-9' | head -c 8
+```
+
+**Windows PowerShell:**
+```powershell
+-join ((65..90 + 48..57) | Get-Random -Count 8 | % {[char]$_})
+```
+
+**Windows cmd.exe (no PowerShell):**
+```cmd
+powershell -command "-join ((65..90 + 48..57) | Get-Random -Count 8 | % {[char]$_})"
+```
+
+> **Rules:** 6–12 characters, alphanumeric only (A-Z, 0-9). Store it in your password manager — you'll need it every time a new client connects. Anyone with this PIN can authorize a connection to your proxy.
+
+Once you have it:
+```bash
+wrangler secret put AUTH_PIN
+# paste your generated PIN when prompted
+```
+
+To rotate: run `wrangler secret put AUTH_PIN` again with a new value. All existing tokens remain valid — only new OAuth flows are affected.
+
+---
+
 ### 5. Deploy
 
 ```bash
