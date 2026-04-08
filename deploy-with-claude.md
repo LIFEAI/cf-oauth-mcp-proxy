@@ -17,7 +17,21 @@ Connect the following MCP servers to your Claude session:
 
 You also need:
 - A Cloudflare account ID
-- A CF API token with: `Workers Scripts: Edit` + `Workers KV Storage: Edit` + `Workers Routes: Edit` (Zone)
+- A CF API token with **all four** of the following permissions:
+
+  | Permission | Scope | Needed for |
+  |---|---|---|
+  | Workers Scripts | Account | Deploy / update Worker code |
+  | Workers KV Storage | Account | Create KV namespace |
+  | Workers Routes | Zone (All zones) | Add subdomain route to Worker |
+  | DNS | Zone (All zones) | Add A record for subdomain |
+
+  > **Important:** Workers Scripts and Workers KV Storage are **Account-level** permissions.
+  > Workers Routes and DNS are **Zone-level** permissions — set them to "All zones" or select your specific zone.
+  > Missing any one of these will cause a partial failure mid-deploy.
+  >
+  > Use the "Edit Cloudflare Workers" template at `dash.cloudflare.com/profile/api-tokens` as a starting point, then add DNS: Edit manually.
+
 - Your upstream MCP server PAT/token (e.g. GitHub PAT with `repo` scope)
 - A chosen AUTH_PIN (see [Generating an AUTH_PIN](README.md#generating-an-auth_pin))
 - A domain on Cloudflare DNS for the Worker route
