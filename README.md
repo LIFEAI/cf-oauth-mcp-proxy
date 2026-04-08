@@ -1,35 +1,47 @@
 # cf-oauth-mcp-proxy
 
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/daveladouceur?label=Sponsor&logo=GitHub&color=c8a84b)](https://github.com/sponsors/daveladouceur)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com)
-[![MCP](https://img.shields.io/badge/MCP-OAuth%202.1-blueviolet)](https://modelcontextprotocol.io)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/daveladouceur?label=Sponsor%20This%20Work&logo=GitHub&color=c8a84b&style=for-the-badge)](https://github.com/sponsors/daveladouceur)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white&style=flat-square)](https://workers.cloudflare.com)
+[![MCP](https://img.shields.io/badge/MCP-OAuth%202.1-blueviolet?style=flat-square)](https://modelcontextprotocol.io)
 
-> **Cloudflare Worker** — OAuth 2.1 + DCR + PKCE edge proxy for any PAT-authenticated MCP server.
+> **Cloudflare Worker** — OAuth 2.1 + DCR + PKCE edge proxy for any PAT-authenticated MCP server.  
+> Connects **claude.ai** (and any OAuth MCP client) to MCP servers that only support PAT/token auth — like the official GitHub MCP server.
 
-Connects OAuth-capable MCP clients (like **claude.ai**) to MCP servers that only support PAT/token auth (like the official GitHub MCP server). The upstream token lives as a Cloudflare Worker secret — never in source code, never in your conversation transcript.
+---
+
+## 💛 Support This Work
+
+**This tool is free, open source, and took real time to build.**
+
+If it saves you hours of debugging OAuth flows, Dockerfiles, and Cloudflare configs — please consider sponsoring. Every contribution directly funds continued open source tooling for the regenerative AI ecosystem.
+
+### → [github.com/sponsors/daveladouceur](https://github.com/sponsors/daveladouceur)
+
+> *"Life before Profits."*  
+> — Dave Ladouceur / [LIFEAI](https://lifeai.dev) / [Regen Dev Corp](https://regendevcorp.com)
 
 ---
 
 ## The Problem
 
-**claude.ai** speaks OAuth 2.1. **GitHub's MCP server** speaks PAT. There is no bridge.
+**claude.ai** speaks OAuth 2.1. **GitHub's MCP server** speaks PAT. There is no official bridge.
 
-The official `api.githubcopilot.com/mcp` endpoint requires a registered GitHub OAuth App per host application — something only GitHub controls for their own integrations. Third-party clients including claude.ai are not registered.
+`api.githubcopilot.com/mcp` requires a registered GitHub OAuth App per host — something only GitHub controls. Third-party clients including claude.ai are not registered, and the workaround in their own docs is "use Docker locally" — which defeats the purpose of a cloud AI assistant.
 
 ## The Solution
 
-A single Cloudflare Worker that:
+A single Cloudflare Worker (~200 lines) that:
 
-1. **Speaks OAuth 2.1** to claude.ai (DCR, PKCE, auth codes, access tokens)
+1. **Speaks OAuth 2.1** to claude.ai — full DCR, PKCE, auth codes, access tokens
 2. **Speaks PAT** to the upstream MCP server
 3. **Stores nothing sensitive in code** — all secrets are CF Worker bindings
-4. **Gates authorization behind a PIN** — only you can approve connections
-5. **Runs at the edge** — zero infrastructure, zero maintenance, ~$0 cost
+4. **Gates authorization with a PIN** — only you can approve new connections
+5. **Runs at the CF edge** — zero infrastructure, zero maintenance, ~$0/month
 
 ```
-claude.ai  →  OAuth 2.1  →  [this Worker]  →  PAT  →  api.githubcopilot.com/mcp
-                              (CF edge)
+claude.ai  ──OAuth 2.1──▶  [this Worker]  ──PAT──▶  api.githubcopilot.com/mcp
+                            (Cloudflare edge)
 ```
 
 ---
@@ -37,12 +49,12 @@ claude.ai  →  OAuth 2.1  →  [this Worker]  →  PAT  →  api.githubcopilot.
 ## OAuth Flow
 
 ```
-1. claude.ai  →  GET /.well-known/oauth-authorization-server  →  Worker returns metadata
-2. claude.ai  →  POST /register                               →  Worker issues client_id (DCR)
+1. claude.ai  →  GET /.well-known/oauth-authorization-server  →  discovers OAuth metadata
+2. claude.ai  →  POST /register                               →  gets client_id (DCR, RFC 7591)
 3. claude.ai  →  GET /authorize?code_challenge=...            →  Worker serves PIN consent page
-4. You        →  Enter PIN in browser                         →  Worker issues auth code
-5. claude.ai  →  POST /token  {code, code_verifier}           →  Worker issues access token (PKCE verified)
-6. claude.ai  →  POST /mcp    Authorization: Bearer <token>   →  Worker validates token, injects PAT, proxies to GitHub
+4. You        →  enter PIN in browser                         →  Worker issues auth code
+5. claude.ai  →  POST /token {code, code_verifier}            →  Worker issues access token (PKCE)
+6. claude.ai  →  POST /mcp  Authorization: Bearer <token>     →  Worker validates, injects PAT, proxies
 ```
 
 ---
@@ -50,9 +62,9 @@ claude.ai  →  OAuth 2.1  →  [this Worker]  →  PAT  →  api.githubcopilot.
 ## Prerequisites
 
 - [Cloudflare account](https://cloudflare.com) (free tier works)
-- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) installed
-- GitHub Personal Access Token with `repo` scope
-- A domain on Cloudflare DNS (or use the free `*.workers.dev` subdomain)
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
+- GitHub PAT with `repo` scope (or any upstream Bearer token)
+- A domain on Cloudflare DNS — or use the free `*.workers.dev` subdomain
 
 ---
 
@@ -69,7 +81,7 @@ cd cf-oauth-mcp-proxy
 
 ```bash
 wrangler kv namespace create github-mcp-oauth
-# Copy the id from the output
+# Copy the id from output
 ```
 
 ### 3. Configure `wrangler.toml`
@@ -77,22 +89,22 @@ wrangler kv namespace create github-mcp-oauth
 ```toml
 [vars]
 BASE_URL     = "https://mcp-proxy.yourdomain.com"   # your Worker's public URL
-UPSTREAM_MCP = "https://api.githubcopilot.com/mcp"  # or any other MCP endpoint
+UPSTREAM_MCP = "https://api.githubcopilot.com/mcp"  # target MCP endpoint
 
 [[kv_namespaces]]
 binding = "OAUTH_KV"
-id      = "PASTE_KV_ID_HERE"
+id      = "PASTE_YOUR_KV_ID_HERE"
 ```
 
 ### 4. Set secrets
 
 ```bash
 wrangler secret put UPSTREAM_TOKEN   # your GitHub PAT (ghp_...)
-wrangler secret put AUTH_PIN         # a PIN you'll type in the browser to authorize
+wrangler secret put AUTH_PIN         # PIN you'll type in browser to authorize
 ```
 
-> **AUTH_PIN** — choose something you can type in a browser. Alphanumeric, 6–12 chars.
-> Store it somewhere safe (password manager). Anyone with this PIN can authorize a client.
+> **AUTH_PIN** — alphanumeric, 6–12 chars, store in your password manager.
+> Anyone with this PIN can authorize a new client connection.
 
 ### 5. Deploy
 
@@ -100,24 +112,17 @@ wrangler secret put AUTH_PIN         # a PIN you'll type in the browser to autho
 wrangler deploy
 ```
 
-### 6. Add DNS route (optional — skip for `*.workers.dev`)
+### 6. (Optional) Add custom domain via Cloudflare DNS
 
-In Cloudflare dashboard:
-- DNS → add `A` record: `mcp-proxy` → `192.0.2.1` (proxied ✅)
-- Workers → Routes → add `mcp-proxy.yourdomain.com/*` → `cf-oauth-mcp-proxy`
-
-Or via CLI:
-```bash
-wrangler deploy --routes "mcp-proxy.yourdomain.com/*"
-```
+In Cloudflare dashboard: DNS → add proxied `A` record → Workers → Routes → add `mcp-proxy.yourdomain.com/*` → `cf-oauth-mcp-proxy`
 
 ### 7. Connect in claude.ai
 
-1. Settings → Connectors → Add custom connector
+1. **Settings → Connectors → Add custom connector**
 2. URL: `https://mcp-proxy.yourdomain.com/mcp`
-3. Click **Connect** — your browser opens the consent page
-4. Enter your **AUTH_PIN**
-5. Click **Authorize Access** — redirected back to claude.ai ✅
+3. Click **Connect** — browser opens the consent page
+4. Enter your **AUTH_PIN** → **Authorize Access**
+5. Redirected back to claude.ai ✅ Full private repo access.
 
 ---
 
@@ -128,20 +133,20 @@ wrangler deploy --routes "mcp-proxy.yourdomain.com/*"
 | Variable | Required | Description |
 |---|---|---|
 | `BASE_URL` | ✅ | Public URL of this Worker (used in OAuth metadata) |
-| `UPSTREAM_MCP` | ✅ | URL of the upstream MCP server to proxy to |
+| `UPSTREAM_MCP` | ✅ | URL of the upstream MCP server |
 
-### Secrets (`wrangler secret put`)
+### Secrets
 
-| Secret | Required | Description |
-|---|---|---|
-| `UPSTREAM_TOKEN` | ✅ | PAT or Bearer token for the upstream MCP server |
-| `AUTH_PIN` | ✅ | PIN to gate the consent page |
+| Secret | Description |
+|---|---|
+| `UPSTREAM_TOKEN` | PAT or Bearer token for the upstream MCP server |
+| `AUTH_PIN` | PIN to gate the consent page |
 
 ### KV binding
 
 | Binding | Purpose |
 |---|---|
-| `OAUTH_KV` | Stores registered clients, auth codes (5min TTL), access tokens (30 day TTL) |
+| `OAUTH_KV` | Clients, auth codes (5 min TTL), access tokens (30 day TTL) |
 
 ---
 
@@ -152,10 +157,10 @@ wrangler deploy --routes "mcp-proxy.yourdomain.com/*"
 | `GET` | `/.well-known/oauth-authorization-server` | RFC 8414 discovery |
 | `POST` | `/register` | RFC 7591 Dynamic Client Registration |
 | `GET` | `/authorize` | PIN consent page |
-| `POST` | `/authorize` | PIN submit → auth code |
-| `POST` | `/token` | Auth code → access token (PKCE verified) |
+| `POST` | `/authorize` | PIN submit → issues auth code |
+| `POST` | `/token` | Auth code + PKCE verifier → access token |
 | `POST` | `/revoke` | Token revocation |
-| `*` | `/mcp` (any path) | Authenticated MCP proxy |
+| `*` | `/*` | Authenticated MCP proxy to upstream |
 
 ---
 
@@ -163,47 +168,51 @@ wrangler deploy --routes "mcp-proxy.yourdomain.com/*"
 
 | Layer | Mechanism |
 |---|---|
-| Upstream token | CF Worker secret binding — encrypted at rest, never in code |
+| Upstream token | CF Worker secret binding — encrypted at rest, never in source |
 | Client authorization | PIN-gated consent page — only PIN holder can authorize |
-| Token transport | PKCE (S256) — auth code interception is useless without code_verifier |
-| Token storage | KV — 30-day TTL, revocable |
-| Proxy URL | Unauthenticated GET returns 401 — requires valid Bearer token |
+| Code interception | PKCE S256 — stolen auth codes are useless without `code_verifier` |
+| Token storage | KV with 30-day TTL — revocable at any time |
+| Unauthenticated requests | 401 with `WWW-Authenticate` header |
 
-**What this does NOT protect against:** someone who knows your Worker URL AND has a valid access token. To add IP allowlisting (Anthropic's IP ranges only), see [Cloudflare Firewall Rules](https://developers.cloudflare.com/firewall/).
+**Optional hardening:** Add a [Cloudflare WAF rule](https://developers.cloudflare.com/firewall/) to restrict `/mcp` to [Anthropic's IP ranges](https://docs.anthropic.com/en/api/ip-addresses) only.
 
 ---
 
 ## Adapting for Other MCP Servers
 
-Change `UPSTREAM_MCP` in `wrangler.toml` to point at any MCP server that accepts a Bearer token. The Worker is fully generic — nothing GitHub-specific except the default value.
+Change `UPSTREAM_MCP` in `wrangler.toml`. The Worker is fully generic.
 
-Examples:
 ```toml
-# Linear
+# Any PAT-authenticated MCP server
 UPSTREAM_MCP = "https://mcp.linear.app/sse"
-
-# Any self-hosted MCP
-UPSTREAM_MCP = "https://my-mcp.internal.company.com/mcp"
+UPSTREAM_MCP = "https://my-internal-mcp.company.com/mcp"
 ```
 
 ---
 
-## Deploying via Coolify (LIFEAI pattern)
+## Why Not Docker / Coolify?
 
-If you prefer container deployment over Wrangler:
+We tried. The official `ghcr.io/github/github-mcp-server` image requires the right CMD args. The npm package is deprecated. Supergateway crashes on reconnect. Cloudflare Worker is 200 lines with zero runtime dependencies, deploys in 3 seconds, and costs nothing.
 
-1. Build the Worker as a Docker container using [`supergateway`](https://github.com/supermachine-ai/supergateway)
-2. Deploy to Coolify Infrastructure project
-3. Set env vars in Coolify → not recommended — **use Wrangler + CF Workers for this pattern**
+Stay on CF Workers for this pattern.
 
-The whole point is zero infrastructure. Stay on CF Workers.
+---
+
+## 💛 If This Helped You
+
+This pattern emerged from hours of trial and error building the LIFEAI regenerative AI ecosystem. If it saved you time — please sponsor:
+
+### → [github.com/sponsors/daveladouceur](https://github.com/sponsors/daveladouceur)
+
+Even $5/month helps sustain open tooling for the people building at the intersection of AI, regenerative systems, and financial engineering. Thank you.
+
+---
+
+*Built by [Dave Ladouceur](https://github.com/daveladouceur) / [LIFEAI](https://lifeai.dev) / [Regen Dev Corp](https://regendevcorp.com)*  
+*Life before Profits.*
 
 ---
 
 ## License
 
-MIT — use freely, adapt for any MCP server.
-
----
-
-*Built by [LIFEAI / Regen Dev Corp](https://regendevcorp.com) — Life before Profits.*
+MIT — use freely, fork liberally, adapt for any MCP server.
