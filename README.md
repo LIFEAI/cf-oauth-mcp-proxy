@@ -59,6 +59,16 @@ claude.ai  ──OAuth 2.1──▶  [this Worker]  ──PAT──▶  api.gith
 
 ---
 
+## Deploy with Claude (No CLI Required)
+
+Any Claude instance with the **Cloudflare Developer Platform MCP** connected can deploy this Worker entirely from chat — no Wrangler, no terminal, no local machine.
+
+See **[deploy-with-claude.md](deploy-with-claude.md)** for the complete step-by-step CF API runbook.
+
+---
+
+---
+
 ## Prerequisites
 
 - [Cloudflare account](https://cloudflare.com) (free tier works)
