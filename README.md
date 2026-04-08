@@ -171,7 +171,11 @@ To revoke a specific client: disconnect it in claude.ai settings or run `claude 
 
 ## Connecting MCP Clients
 
-### claude.ai (Web)
+> **Claude Code users:** You don't need this proxy. Claude Code uses the `gh` CLI which is already pre-authenticated with full private repo access. This proxy is built for **claude.ai web** and other OAuth MCP clients that can't inject a PAT directly.
+
+---
+
+### claude.ai (Web) — Primary Use Case
 
 1. Go to **Settings → Connectors → Add custom connector**
 2. Enter your Worker URL:
@@ -180,25 +184,23 @@ To revoke a specific client: disconnect it in claude.ai settings or run `claude 
    ```
 3. Click **Connect** — your browser opens the PIN consent page
 4. Enter your **AUTH_PIN** and click **Authorize Access**
-5. You are redirected back to claude.ai ✅
+5. Redirected back to claude.ai ✅ Full private repo access.
 
 To enable per-conversation: click **+** → **Connectors** → toggle on.
 
-To revoke: Settings → Connectors → remove the connector. The access token expires automatically after 30 days.
+To revoke: Settings → Connectors → remove the connector. Token expires automatically after 30 days.
 
 ---
 
-### Windows — One-Click Installer (`install-mcp.cmd`)
+### Other OAuth MCP Clients — Windows Installer
 
-Download and run the included installer from `cmd.exe` — no PowerShell, no admin rights required.
-
-**With your Worker URL as argument:**
+For any other MCP client that supports OAuth 2.1 (not Claude Code), use the included `install-mcp.cmd`:
 
 ```cmd
 install-mcp.cmd https://YOUR_WORKER_DOMAIN
 ```
 
-**Or run it and it will prompt you:**
+Or run without arguments to be prompted:
 
 ```cmd
 install-mcp.cmd
@@ -212,69 +214,11 @@ The script will:
 5. Verify with `claude mcp list`
 6. Print next steps including the OAuth PIN URL
 
-After running — restart Claude Code, then run `/mcp` to trigger the browser OAuth flow.
-
 ---
 
-### Claude Code CLI (manual)
+### `.mcp.json` (project-level, for non-Claude Code teams)
 
-Claude Code supports OAuth 2.1 natively — it auto-discovers your OAuth endpoints and opens the browser for authorization. No PAT or headers needed in the config.
-
-**Add via JSON (recommended):**
-
-```bash
-claude mcp add-json github '{"type":"http","url":"https://YOUR_WORKER_DOMAIN/mcp"}'
-```
-
-**Or via legacy transport flag:**
-
-```bash
-claude mcp add --transport http github https://YOUR_WORKER_DOMAIN/mcp
-```
-
-**Windows (PowerShell):**
-
-```powershell
-claude mcp add-json github '{"type":"http","url":"https://YOUR_WORKER_DOMAIN/mcp"}'
-```
-
-> **Windows note:** If `claude mcp add-json` returns `Invalid input`, use the legacy `--transport http` form above.
-
-After adding, restart Claude Code. On first use, run `/mcp` — Claude Code opens the browser for PIN authorization and stores the token in your system keychain (Windows Credential Manager / macOS Keychain).
-
-**Verify connection:**
-
-```bash
-claude mcp list
-claude mcp get github
-```
-
-**Scope the config (optional):**
-
-```bash
-# Available only in current project (default)
-claude mcp add-json github '...' --scope local
-
-# Shared with team via .mcp.json in repo root
-claude mcp add-json github '...' --scope project
-
-# Available across all your projects
-claude mcp add-json github '...' --scope user
-```
-
-**Re-authorize (if token expires or is revoked):**
-
-```bash
-claude mcp remove github
-claude mcp add-json github '{"type":"http","url":"https://YOUR_WORKER_DOMAIN/mcp"}'
-# Then restart Claude Code and run /mcp to re-trigger OAuth flow
-```
-
----
-
-### `.mcp.json` (project-level, checked into git)
-
-Add to your repo root `.mcp.json` to share the connector with your whole team:
+If your team uses an OAuth-capable MCP host other than Claude Code:
 
 ```json
 {
@@ -287,8 +231,7 @@ Add to your repo root `.mcp.json` to share the connector with your whole team:
 }
 ```
 
-Each team member authorizes individually with their own PIN flow — tokens are personal and stored locally.
-
+Each member authorizes individually with the PIN — tokens are personal and stored locally.
 ---
 
 ## Configuration Reference
