@@ -126,6 +126,102 @@ In Cloudflare dashboard: DNS → add proxied `A` record → Workers → Routes �
 
 ---
 
+---
+
+## Connecting MCP Clients
+
+### claude.ai (Web)
+
+1. Go to **Settings → Connectors → Add custom connector**
+2. Enter your Worker URL:
+   ```
+   https://mcp-proxy.yourdomain.com/mcp
+   ```
+3. Click **Connect** — your browser opens the PIN consent page
+4. Enter your **AUTH_PIN** and click **Authorize Access**
+5. You are redirected back to claude.ai ✅
+
+To enable per-conversation: click **+** → **Connectors** → toggle on.
+
+To revoke: Settings → Connectors → remove the connector. The access token expires automatically after 30 days.
+
+---
+
+### Claude Code CLI
+
+Claude Code supports OAuth 2.1 natively — it auto-discovers your OAuth endpoints and opens the browser for authorization. No PAT or headers needed in the config.
+
+**Add via JSON (recommended):**
+
+```bash
+claude mcp add-json github '{"type":"http","url":"https://mcp-proxy.yourdomain.com/mcp"}'
+```
+
+**Or via legacy transport flag:**
+
+```bash
+claude mcp add --transport http github https://mcp-proxy.yourdomain.com/mcp
+```
+
+**Windows (PowerShell):**
+
+```powershell
+claude mcp add-json github '{"type":"http","url":"https://mcp-proxy.yourdomain.com/mcp"}'
+```
+
+> **Windows note:** If `claude mcp add-json` returns `Invalid input`, use the legacy `--transport http` form above.
+
+After adding, restart Claude Code. On first use, run `/mcp` — Claude Code opens the browser for PIN authorization and stores the token in your system keychain (Windows Credential Manager / macOS Keychain).
+
+**Verify connection:**
+
+```bash
+claude mcp list
+claude mcp get github
+```
+
+**Scope the config (optional):**
+
+```bash
+# Available only in current project (default)
+claude mcp add-json github '...' --scope local
+
+# Shared with team via .mcp.json in repo root
+claude mcp add-json github '...' --scope project
+
+# Available across all your projects
+claude mcp add-json github '...' --scope user
+```
+
+**Re-authorize (if token expires or is revoked):**
+
+```bash
+claude mcp remove github
+claude mcp add-json github '{"type":"http","url":"https://mcp-proxy.yourdomain.com/mcp"}'
+# Then restart Claude Code and run /mcp to re-trigger OAuth flow
+```
+
+---
+
+### `.mcp.json` (project-level, checked into git)
+
+Add to your repo root `.mcp.json` to share the connector with your whole team:
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "type": "http",
+      "url": "https://mcp-proxy.yourdomain.com/mcp"
+    }
+  }
+}
+```
+
+Each team member authorizes individually with their own PIN flow — tokens are personal and stored locally.
+
+---
+
 ## Configuration Reference
 
 ### `wrangler.toml` vars
