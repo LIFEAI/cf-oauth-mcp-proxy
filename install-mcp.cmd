@@ -3,8 +3,11 @@ setlocal EnableDelayedExpansion
 
 :: ============================================================================
 :: install-mcp.cmd
-:: Installs the cf-oauth-mcp-proxy as a GitHub MCP server in Claude Code.
-:: Run from cmd.exe — does NOT require PowerShell or admin rights.
+:: Installs cf-oauth-mcp-proxy as a GitHub MCP connector in any OAuth MCP client.
+::
+:: NOTE: Claude Code users do NOT need this.
+::   Claude Code uses the gh CLI which is already pre-authenticated.
+::   This installer is for claude.ai web and other OAuth MCP clients.
 ::
 :: Usage:
 ::   install-mcp.cmd
@@ -12,8 +15,12 @@ setlocal EnableDelayedExpansion
 :: ============================================================================
 
 echo.
-echo  cf-oauth-mcp-proxy ^| Claude Code MCP Installer
-echo  ================================================
+echo  cf-oauth-mcp-proxy ^| MCP Client Installer
+echo  ============================================
+echo.
+echo  NOTE: Claude Code users -- you don't need this.
+echo  Claude Code uses the gh CLI which is already pre-authenticated.
+echo  This is for claude.ai web and other OAuth MCP clients.
 echo.
 
 :: -- Resolve Worker URL -------------------------------------------------------
@@ -79,17 +86,17 @@ claude mcp list
 
 echo.
 echo  ============================================================
-echo   SUCCESS — GitHub MCP server installed.
+echo   SUCCESS -- MCP server installed.
 echo  ============================================================
 echo.
 echo   Next steps:
-echo   1. Restart Claude Code
+echo   1. Restart Claude Code (or your MCP client)
 echo   2. Run /mcp inside Claude Code to trigger OAuth auth
 echo   3. Your browser will open: %WORKER_URL%/authorize
 echo   4. Enter your AUTH_PIN to authorize access
 echo   5. You will be redirected back -- done!
 echo.
-echo   To verify tools are available, run inside Claude Code:
+echo   To verify tools are available inside Claude Code:
 echo     /mcp
 echo.
 echo   To remove:
