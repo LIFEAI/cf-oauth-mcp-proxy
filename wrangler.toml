@@ -1,0 +1,24 @@
+name       = "cf-oauth-mcp-proxy"
+main       = "worker.js"
+compatibility_date = "2024-01-01"
+
+# ── Environment variables (non-secret) ────────────────────────────────────────
+[vars]
+BASE_URL     = "https://your-worker-domain.example.com"   # public URL of this Worker
+UPSTREAM_MCP = "https://api.githubcopilot.com/mcp"        # target MCP server endpoint
+
+# ── KV namespace binding ───────────────────────────────────────────────────────
+# Create with: wrangler kv namespace create github-mcp-oauth
+# Then paste the id below.
+[[kv_namespaces]]
+binding = "OAUTH_KV"
+id      = "YOUR_KV_NAMESPACE_ID"
+
+# ── Secrets (do NOT put values here — use wrangler secret put) ─────────────────
+# wrangler secret put UPSTREAM_TOKEN   # PAT or token for the upstream MCP server
+# wrangler secret put AUTH_PIN         # PIN to gate the consent page
+
+# ── Routes (optional — only if using a custom domain via Cloudflare DNS) ───────
+# [[routes]]
+# pattern = "mcp-proxy.example.com/*"
+# zone_name = "example.com"
