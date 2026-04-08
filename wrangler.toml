@@ -1,24 +1,52 @@
-name       = "cf-oauth-mcp-proxy"
-main       = "worker.js"
-compatibility_date = "2024-01-01"
+name               = "cf-oauth-mcp-proxy"
+main               = "worker.js"
+compatibility_date = "2025-01-01"
 
-# ── Environment variables (non-secret) ────────────────────────────────────────
+# -- Required Cloudflare API token permissions ---------------------------------
+# The token used with wrangler must have ALL of the following:
+#
+#   Account > Workers Scripts     > Edit
+#   Account > Workers KV Storage  > Edit
+#   Zone    > Workers Routes      > Edit   (only if using a custom domain route)
+#
+# Create at: https://dash.cloudflare.com/profile/api-tokens
+# Use the "Workers Full Access" template or add permissions manually.
+#
+# Set the token for wrangler:
+#   export CLOUDFLARE_API_TOKEN=<your-token>
+#   (or add to .env and source it -- never commit to git)
+
+# -- Environment variables (non-secret, safe to commit) -----------------------
 [vars]
 BASE_URL     = "https://your-worker-domain.example.com"   # public URL of this Worker
 UPSTREAM_MCP = "https://api.githubcopilot.com/mcp"        # target MCP server endpoint
 
-# ── KV namespace binding ───────────────────────────────────────────────────────
-# Create with: wrangler kv namespace create github-mcp-oauth
-# Then paste the id below.
+# -- KV namespace binding ------------------------------------------------------
+# Step 1: create the namespace
+#   wrangler kv namespace create github-mcp-oauth
+#
+# Step 2: copy the printed id into the fields below
+# Note: preview_id can be the same id as id for local dev
 [[kv_namespaces]]
-binding = "OAUTH_KV"
-id      = "YOUR_KV_NAMESPACE_ID"
+binding    = "OAUTH_KV"
+id         = "YOUR_KV_NAMESPACE_ID"
+preview_id = "YOUR_KV_NAMESPACE_ID"
 
-# ── Secrets (do NOT put values here — use wrangler secret put) ─────────────────
-# wrangler secret put UPSTREAM_TOKEN   # PAT or token for the upstream MCP server
-# wrangler secret put AUTH_PIN         # PIN to gate the consent page
+# -- Secrets (NEVER put values here -- use wrangler secret put) ----------------
+#
+#   wrangler secret put UPSTREAM_TOKEN
+#   # paste your GitHub PAT (ghp_...) or any upstream Bearer token
+#
+#   wrangler secret put AUTH_PIN
+#   # paste a PIN (6-12 alphanumeric chars) -- store in your password manager
+#
+# Secrets are encrypted at rest in Cloudflare, injected at runtime via env.
+# They are NOT visible in wrangler.toml, source code, or deployment logs.
 
-# ── Routes (optional — only if using a custom domain via Cloudflare DNS) ───────
+# -- Custom domain route (optional -- skip for *.workers.dev) -----------------
+# Requires: proxied A record in Cloudflare DNS for your subdomain
+# Requires: Zone > Workers Routes > Edit on your CF API token
+#
 # [[routes]]
-# pattern = "mcp-proxy.example.com/*"
-# zone_name = "example.com"
+# pattern   = "mcp-proxy.yourdomain.com/*"
+# zone_name = "yourdomain.com"
