@@ -19,7 +19,7 @@ If it saves you hours of debugging OAuth flows, Dockerfiles, and Cloudflare conf
 ### → [github.com/sponsors/daveladouceur](https://github.com/sponsors/daveladouceur)
 
 > *"Life before Profits."*  
-> — Dave Ladouceur / [LIFEAI](https://lifeai.dev) / [Regen Dev Corp](https://regendevcorp.com)
+> — Dave Ladouceur / [LIFEAI](https://lifeai.dev) / [Regen Dev Corp](https://YOUR_DOMAIN)
 
 ---
 
@@ -88,7 +88,7 @@ wrangler kv namespace create github-mcp-oauth
 
 ```toml
 [vars]
-BASE_URL     = "https://github-mcp.regendevcorp.com"   # your Worker's public URL
+BASE_URL     = "https://YOUR_WORKER_DOMAIN"   # your Worker's public URL
 UPSTREAM_MCP = "https://api.githubcopilot.com/mcp"  # target MCP endpoint
 
 [[kv_namespaces]]
@@ -114,12 +114,12 @@ wrangler deploy
 
 ### 6. (Optional) Add custom domain via Cloudflare DNS
 
-In Cloudflare dashboard: DNS → add proxied `A` record → Workers → Routes → add `github-mcp.regendevcorp.com/*` → `cf-oauth-mcp-proxy`
+In Cloudflare dashboard: DNS → add proxied `A` record → Workers → Routes → add `YOUR_WORKER_DOMAIN/*` → `cf-oauth-mcp-proxy`
 
 ### 7. Connect in claude.ai
 
 1. **Settings → Connectors → Add custom connector**
-2. URL: `https://github-mcp.regendevcorp.com/mcp`
+2. URL: `https://YOUR_WORKER_DOMAIN/mcp`
 3. Click **Connect** — browser opens the consent page
 4. Enter your **AUTH_PIN** → **Authorize Access**
 5. Redirected back to claude.ai ✅ Full private repo access.
@@ -135,7 +135,7 @@ In Cloudflare dashboard: DNS → add proxied `A` record → Workers → Routes �
 1. Go to **Settings → Connectors → Add custom connector**
 2. Enter your Worker URL:
    ```
-   https://github-mcp.regendevcorp.com/mcp
+   https://YOUR_WORKER_DOMAIN/mcp
    ```
 3. Click **Connect** — your browser opens the PIN consent page
 4. Enter your **AUTH_PIN** and click **Authorize Access**
@@ -154,19 +154,19 @@ Claude Code supports OAuth 2.1 natively — it auto-discovers your OAuth endpoin
 **Add via JSON (recommended):**
 
 ```bash
-claude mcp add-json github '{"type":"http","url":"https://github-mcp.regendevcorp.com/mcp"}'
+claude mcp add-json github '{"type":"http","url":"https://YOUR_WORKER_DOMAIN/mcp"}'
 ```
 
 **Or via legacy transport flag:**
 
 ```bash
-claude mcp add --transport http github https://github-mcp.regendevcorp.com/mcp
+claude mcp add --transport http github https://YOUR_WORKER_DOMAIN/mcp
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-claude mcp add-json github '{"type":"http","url":"https://github-mcp.regendevcorp.com/mcp"}'
+claude mcp add-json github '{"type":"http","url":"https://YOUR_WORKER_DOMAIN/mcp"}'
 ```
 
 > **Windows note:** If `claude mcp add-json` returns `Invalid input`, use the legacy `--transport http` form above.
@@ -197,7 +197,7 @@ claude mcp add-json github '...' --scope user
 
 ```bash
 claude mcp remove github
-claude mcp add-json github '{"type":"http","url":"https://github-mcp.regendevcorp.com/mcp"}'
+claude mcp add-json github '{"type":"http","url":"https://YOUR_WORKER_DOMAIN/mcp"}'
 # Then restart Claude Code and run /mcp to re-trigger OAuth flow
 ```
 
@@ -212,7 +212,7 @@ Add to your repo root `.mcp.json` to share the connector with your whole team:
   "mcpServers": {
     "github": {
       "type": "http",
-      "url": "https://github-mcp.regendevcorp.com/mcp"
+      "url": "https://YOUR_WORKER_DOMAIN/mcp"
     }
   }
 }
@@ -304,7 +304,7 @@ Even $5/month helps sustain open tooling for the people building at the intersec
 
 ---
 
-*Built by [Dave Ladouceur](https://github.com/daveladouceur) / [LIFEAI](https://lifeai.dev) / [Regen Dev Corp](https://regendevcorp.com)*  
+*Built by [Dave Ladouceur](https://github.com/daveladouceur) / [LIFEAI](https://lifeai.dev) / [Regen Dev Corp](https://YOUR_DOMAIN)*  
 *Life before Profits.*
 
 ---
