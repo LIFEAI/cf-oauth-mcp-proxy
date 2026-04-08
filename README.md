@@ -116,13 +116,54 @@ wrangler deploy
 
 In Cloudflare dashboard: DNS → add proxied `A` record → Workers → Routes → add `YOUR_WORKER_DOMAIN/*` → `cf-oauth-mcp-proxy`
 
-### 7. Connect in claude.ai
+### 7. Connect your clients
+
+> **Important:** Each MCP client (claude.ai, Claude Code, etc.) runs its own independent
+> OAuth flow and gets its own KV access token. They never interfere with each other.
+> You will enter your PIN once per client. **Connect claude.ai first** — it is the
+> fastest sanity check that your Worker, KV, PIN, and redirect are all working correctly.
+
+#### Step 7a — claude.ai (do this first)
 
 1. **Settings → Connectors → Add custom connector**
 2. URL: `https://YOUR_WORKER_DOMAIN/mcp`
-3. Click **Connect** — browser opens the consent page
-4. Enter your **AUTH_PIN** → **Authorize Access**
-5. Redirected back to claude.ai ✅ Full private repo access.
+3. Click **Connect** — browser opens the PIN consent page
+4. Enter your **AUTH_PIN** → click **Authorize Access**
+5. Redirected back to claude.ai ✅
+
+Verify it works by asking Claude to list your private repos before moving on.
+
+#### Step 7b — Claude Code CLI (after claude.ai is confirmed working)
+
+```bash
+# Add the connector (Claude Code handles OAuth automatically)
+claude mcp add-json github '{"type":"http","url":"https://YOUR_WORKER_DOMAIN/mcp"}'
+```
+
+Restart Claude Code. On first use run `/mcp` — browser opens for PIN auth.
+Claude Code stores its own token in your system keychain independently of claude.ai.
+
+```bash
+# Verify
+claude mcp list
+claude mcp get github
+```
+
+> **Windows note:** If `add-json` returns `Invalid input`, use:
+> `claude mcp add --transport http github https://YOUR_WORKER_DOMAIN/mcp`
+
+#### How tokens work across clients
+
+Each client that completes the OAuth flow gets its own entry in KV:
+
+```
+KV store:
+  token:<uuid-A>  →  { client_id: "claude-ai-dcr-id",   created_at: ... }   ← claude.ai token
+  token:<uuid-B>  →  { client_id: "claude-code-dcr-id", created_at: ... }   ← Claude Code token
+```
+
+Both tokens are valid simultaneously. Each expires after 30 days independently.
+To revoke a specific client: disconnect it in claude.ai settings or run `claude mcp remove github`.
 
 ---
 
