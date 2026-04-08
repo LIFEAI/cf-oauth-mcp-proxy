@@ -188,7 +188,35 @@ To revoke: Settings → Connectors → remove the connector. The access token ex
 
 ---
 
-### Claude Code CLI
+### Windows — One-Click Installer (`install-mcp.cmd`)
+
+Download and run the included installer from `cmd.exe` — no PowerShell, no admin rights required.
+
+**With your Worker URL as argument:**
+
+```cmd
+install-mcp.cmd https://YOUR_WORKER_DOMAIN
+```
+
+**Or run it and it will prompt you:**
+
+```cmd
+install-mcp.cmd
+```
+
+The script will:
+1. Check `claude` CLI is installed
+2. Remove any existing `github` MCP entry
+3. Try `claude mcp add-json` (Claude Code 2.1.1+)
+4. Fall back to `claude mcp add --transport http` if needed
+5. Verify with `claude mcp list`
+6. Print next steps including the OAuth PIN URL
+
+After running — restart Claude Code, then run `/mcp` to trigger the browser OAuth flow.
+
+---
+
+### Claude Code CLI (manual)
 
 Claude Code supports OAuth 2.1 natively — it auto-discovers your OAuth endpoints and opens the browser for authorization. No PAT or headers needed in the config.
 
